@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสั่งซื้อหนังสือ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<!-- Navbar เมนูนำทาง -->
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">LIBRARY</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="contact.html">ติดต่อ</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- รายการหนังสือ -->
+<div class="container mt-4">
+    <h2 class="text-center">📚 เลือกหนังสือที่ต้องการสั่งซื้อ</h2>
+    <div class="row" id="book-list">
+        <!-- รายการหนังสือจะถูกเพิ่มที่นี่โดย JavaScript -->
+    </div>
+</div>
+
+<!-- ตะกร้าสินค้า -->
+<div class="container mt-4">
+    <h4>🛒 ตะกร้าสินค้า</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>หนังสือ</th>
+                <th>ราคา (บาท)</th>
+                <th>จำนวน</th>
+                <th>รวม</th>
+                <th>ลบ</th>
+            </tr>
+        </thead>
+        <tbody id="cart-list"></tbody>
+    </table>
+    <h5 class="text-end">💰 ยอดรวม: <span id="grand-total">0</span> บาท</h5>
+</div>
+
+<!-- ฟอร์มกรอกข้อมูลลูกค้า -->
+<div class="container mt-4">
+    <h4>📝 ข้อมูลผู้สั่งซื้อ</h4>
+    <form>
+        <div class="mb-2">
+            <label>ชื่อ-นามสกุล:</label>
+            <input type="text" class="form-control" required>
+        </div>
+        <div class="mb-2">
+            <label>เบอร์โทรศัพท์:</label>
+            <input type="tel" class="form-control" required>
+        </div>
+        <div class="mb-2">
+            <label>ที่อยู่จัดส่ง:</label>
+            <textarea class="form-control" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-success w-100">ยืนยันการสั่งซื้อ</button>
+    </form>
+</div>
+
+<!-- JavaScript -->
+<script>
+$(document).ready(function () {
+    // 🔹 รายการหนังสือ (เพิ่มให้ครบทุกเล่ม)
+    let books = [
+        { id: 1, name: "Harry Potter", price: 350 },
+        { id: 2, name: "Lord of the Rings", price: 400 },
+        { id: 3, name: "The Martian", price: 300 },
+        { id: 4, name: "Game of Thrones", price: 450 },
+        { id: 5, name: "Percy Jackson", price: 320 },
+        { id: 6, name: "Sherlock Holmes", price: 280 },
+        { id: 7, name: "1984 by George Orwell", price: 310 },
+        { id: 8, name: "To Kill a Mockingbird", price: 290 },
+        { id: 9, name: "Pride and Prejudice", price: 270 }
+    ];
+
+    // 🔹 แสดงรายการหนังสือในหน้าเว็บ
+    books.forEach(book => {
+        $("#book-list").append(`
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">${book.name}</h5>
+                        <p class="card-text">ราคา: ${book.price} บาท</p>
+                        <button class="btn btn-primary add-to-cart" data-id="${book.id}" data-name="${book.name}" data-price="${book.price}">เพิ่มลงตะกร้า</button>
+                    </div>
+                </div>
+            </div>
+        `);
+    });
+
+    // 🔹 ตัวแปรเก็บข้อมูลตะกร้าสินค้า
+    let cart = {};
+
+    // ✅ เพิ่มสินค้าในตะกร้า
+    $(document).on("click", ".add-to-cart", function () {
+        let bookId = $(this).data("id");
+        let bookName = $(this).data("name");
+        let bookPrice = $(this).data("price");
+
+        if (cart[bookId]) {
+            cart[bookId].qty++;
+        } else {
+            cart[bookId] = { name: bookName, price: bookPrice, qty: 1 };
+        }
+
+        updateCart();
+    });
+
+    // 🔹 ฟังก์ชันอัปเดตตะกร้าสินค้า
+    function updateCart() {
+        let cartHTML = "";
+        let totalPrice = 0;
+
+        Object.keys(cart).forEach(id => {
+            let item = cart[id];
+            let subtotal = item.price * item.qty;
+            totalPrice += subtotal;
+
+            cartHTML += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.price}</td>
+                    <td><input type="number" class="form-control cart-qty" data-id="${id}" value="${item.qty}" min="1"></td>
+                    <td>${subtotal}</td>
+                    <td><button class="btn btn-danger remove-item" data-id="${id}">X</button></td>
+                </tr>
+            `;
+        });
+
+        $("#cart-list").html(cartHTML);
+        $("#grand-total").text(totalPrice);
+    }
+
+    // ✅ เปลี่ยนจำนวนสินค้าในตะกร้า
+    $(document).on("input", ".cart-qty", function () {
+        let bookId = $(this).data("id");
+        let newQty = parseInt($(this).val());
+
+        if (newQty > 0) {
+            cart[bookId].qty = newQty;
+        } else {
+            delete cart[bookId];
+        }
+
+        updateCart();
+    });
+
+    // ✅ ลบสินค้าออกจากตะกร้า
+    $(document).on("click", ".remove-item", function () {
+        let bookId = $(this).data("id");
+        delete cart[bookId];
+        updateCart();
+    });
+});
+</script>
+
+</body>
+</html>
